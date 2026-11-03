@@ -1,0 +1,72 @@
+import json
+import math
+from openai import OpenAI
+import sqlite3
+import os
+
+client = OpenAI(base_url=os.environ["OPENAI_BASE_URL"],
+                api_key=os.environ["OPENAI_API_KEY"])
+dbstore=["To reset your password, open Settings then Security and click Reset.",
+         "Invoices are emailed on the first of each month.",
+         "You can invite teammates from the Members page.",
+         "Export your data as CSV from the Reports tab.",
+         "Two-factor login is turned on in the Security settings.",
+         "Deleted items stay in the trash for 30 days."]
+
+response=client.embeddings.create(
+        model = "text-embedding-3-small",
+        input=dbstore
+        )
+
+#print(response.data[0])
+
+db=sqlite3.connect("store.db")
+db.execute("create table if not exists docs (text TEXT, embedding TEXT)")
+for doc, data in zip(dbstore,response.data):
+    db.execute("insert into docs values (?,?)", (doc, json.dumps(data.embedding)))
+
+db.commit()
+
+
+
+
+
+
+
+Query against the DB to generate revelant info:
+
+root@escbash-lab:~/vectorstore# cat query2.py 
+import sqlite3
+import json
+import math
+import os
+from openai import OpenAI
+
+def cosine(a,b):
+    p = sum(x*y for x, y in zip(a,b))
+    q = math.sqrt(sum(x*x for x in a))
+    r = math.sqrt(sum(y*y for y in b))
+    cosine= p / (q + r)
+    return(cosine)
+
+query = "I removed a file by mistake, can I get it back?"
+
+
+client= OpenAI(base_url =os.environ["OPENAI_BASE_URL"],
+               api_key = os.environ["OPENAI_API_KEY"])
+response=client.embeddings.create(
+        model = "text-embedding-3-small",
+        input = query)
+
+dataembed = response.data[0].embedding
+
+scored = []
+db = sqlite3.connect("store.db")
+for line, dump in db.execute("select text, embedding from docs"):
+    vec = json.loads(dump)
+    scored.append({"text":line,"score":round(cosine(dataembed,vec),3)})
+
+scored.sort(key=lambda x:x['score'],reverse=True)
+print(json.dumps(scored[:2]))
+#for item in scored[:2]:
+#    print(json.dumps(item))
