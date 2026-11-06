@@ -1,0 +1,25 @@
+root@escbash-lab:~/runbook-assistant/answers# cat oncall.txt 
+The documents do not contain this information.
+Honest refusal: I refuse to answer this question
+
+The provided Payments service runbook only covers two topics: deploys (Wednesdays at 11:00 UTC, frozen during the last week of each quarter) and restarts (using the worker-restart script, one worker at a time). There is no information about on-call schedules or personnel.
+root@escbash-lab:~/runbook-assistant/answers# cat refund.txt 
+The documents do not contain this information.
+Honest refusal: I refuse to answer this question
+
+The provided document only covers payment log retention (30 days) and the policy regarding card numbers appearing in logs. It does not include any procedures for processing customer refunds, and I am not permitted to invent procedures on my own as this could be dangerous.
+root@escbash-lab:~/runbook-assistant/answers# cat cert.txt 
+The document covers this. According to the runbook:
+
+**Fallback procedure:** If automatic renewal of the payment gateway certificate fails, the fallback is:
+
+1. Perform a **manual renewal using the `certbot` command**
+2. Followed by a **gateway restart**
+root@escbash-lab:~/runbook-assistant/answers# cat queue.txt 
+According to the document, since the payment queue is at 12000 messages (which is past the 10000 threshold), you should:
+
+1. **Scale the workers to 8** using the scale command
+2. **Page the on-call engineer**
+
+This is the documented procedure for when the payment queue exceeds 10000 messages.
+root@escbash-lab:~/runbook-assistant/answers# 
